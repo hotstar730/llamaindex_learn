@@ -43,25 +43,19 @@ if __name__ == "__main__":
     )
     metadata_obj.create_all(engine)
 
-
     sql_database = SQLDatabase(engine, include_tables=["city_stats"])
     from sqlalchemy import insert
 
     rows = [
         {"city_name": "Toronto", "population": 2930000, "country": "Canada"},
         {"city_name": "Tokyo", "population": 13960000, "country": "Japan"},
-        {
-            "city_name": "Chicago",
-            "population": 2679000,
-            "country": "United States",
-        },
+        {"city_name": "Chicago", "population": 2679000, "country": "United States"},
         {"city_name": "Seoul", "population": 9776000, "country": "South Korea"},
     ]
     for row in rows:
         stmt = insert(city_stats_table).values(**row)
         with engine.begin() as connection:
             cursor = connection.execute(stmt)
-
 
     # view current table
     stmt = select(
@@ -84,12 +78,14 @@ if __name__ == "__main__":
     from llama_index.core.query_engine import NLSQLTableQueryEngine
 
     # 定义你的LLM
-    llm = Ollama(model="gemma:2b")
+    llm = Ollama(model="sqlcoder:latest")
     llm.base_url = "http://1.92.64.112:11434"
 
     query_engine = NLSQLTableQueryEngine(
         sql_database=sql_database, tables=["city_stats"], llm=llm
     )
-    query_str = "Which city has the highest population?"
+    # query_str = "Which city has the highest population?"
+    query_str = "人口最多的城市"
     response = query_engine.query(query_str)
     print(response)
+    display(Markdown(f"<b>{response}</b>"))

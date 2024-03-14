@@ -3,7 +3,7 @@
 
 """
     项目名称:  llamaindex_learn
-    文件名称： 01ollama_simple.py.py
+    文件名称： 01_ollama_simple.py.py
     功能描述： ..
     创建者：   lixinxin
     创建日期： 2024/3/14 10:19

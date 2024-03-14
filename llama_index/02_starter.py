@@ -1,3 +1,5 @@
+import os
+
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings, ServiceContext, SummaryIndex
 from llama_index.llms.ollama import Ollama
 
@@ -7,8 +9,9 @@ if __name__ == "__main__":
     llm.base_url = "http://1.92.64.112:11434"
 
     # 定义你的服务上下文
+    model_dir = os.path.abspath('embed_model/bge-small-en-v1.5')
     service_context = ServiceContext.from_defaults(
-        llm=llm, embed_model="local:D:/C 代码/lllama/llamaindex_learn/llama_index/embed_model/bge-small-en-v1.5"
+        llm=llm, embed_model="local:"+model_dir
     )
 
     # 加载你的数据

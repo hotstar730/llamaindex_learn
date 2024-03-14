@@ -78,15 +78,14 @@ if __name__ == "__main__":
     from llama_index.core.query_engine import NLSQLTableQueryEngine
 
     # 定义你的LLM
-    llm = Ollama(model="sqlcoder:latest")
-    llm.temperature = 0.7
+    llm = Ollama(model="pxlksr/defog_sqlcoder-7b-2:Q8")
+    llm.temperature = 0.2
     llm.base_url = "http://1.92.64.112:11434"
 
     query_engine = NLSQLTableQueryEngine(
         sql_database=sql_database, tables=["city_stats"], llm=llm
     )
     query_str = "Which city has the highest population?"
-    # query_str = "Tokyo的人口是多少"
     response = query_engine.query(query_str)
     print(response)
     display(Markdown(f"<b>{response}</b>"))

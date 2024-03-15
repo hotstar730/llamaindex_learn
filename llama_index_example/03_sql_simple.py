@@ -82,9 +82,33 @@ if __name__ == "__main__":
     llm.temperature = 0.2
     llm.base_url = "http://1.92.64.112:11434"
 
-    query_engine = NLSQLTableQueryEngine(
-        sql_database=sql_database, tables=["city_stats"], llm=llm
+    from llama_index.core.indices.struct_store.sql_query import (
+        SQLTableRetrieverQueryEngine,
     )
+    from llama_index.core.objects import (
+        SQLTableNodeMapping,
+        ObjectIndex,
+        SQLTableSchema,
+    )
+    from llama_index.core import VectorStoreIndex
+
+    # set Logging to DEBUG for more detailed outputs
+    table_node_mapping = SQLTableNodeMapping(sql_database)
+    table_schema_objs = [
+        (SQLTableSchema(table_name="city_stats"))
+    ]  # add a SQLTableSchema for each table
+
+    obj_index = ObjectIndex.from_objects(
+        table_schema_objs,
+        table_node_mapping,
+        VectorStoreIndex,
+    )
+    query_engine = SQLTableRetrieverQueryEngine(
+        sql_database, obj_index.as_retriever(similarity_top_k=1)
+    )
+    # query_engine = NLSQLTableQueryEngine(
+    #     sql_database=sql_database, tables=["city_stats"], llm=llm
+    # )
     query_str = "Which city has the highest population?"
     response = query_engine.query(query_str)
     print(response)

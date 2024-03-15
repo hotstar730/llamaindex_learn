@@ -8,6 +8,7 @@
     创建者：   lixinxin
     创建日期： 2024/3/14 13:47
 """
+import datetime
 import os
 import openai
 from llama_index.core import SQLDatabase
@@ -103,6 +104,7 @@ if __name__ == "__main__":
         table_node_mapping,
         VectorStoreIndex,
     )
+    print(datetime.datetime.now())
     query_engine = SQLTableRetrieverQueryEngine(
         sql_database, obj_index.as_retriever(similarity_top_k=1)
     )
@@ -113,3 +115,4 @@ if __name__ == "__main__":
     response = query_engine.query(query_str)
     print(response)
     display(Markdown(f"<b>{response}</b>"))
+    print(datetime.datetime.now())

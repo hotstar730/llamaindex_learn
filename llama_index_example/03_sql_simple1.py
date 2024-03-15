@@ -11,7 +11,7 @@
 import datetime
 import os
 import openai
-from llama_index.core import SQLDatabase, VectorStoreIndex
+from llama_index.core import SQLDatabase, VectorStoreIndex, Settings
 from llama_index.llms.ollama import Ollama
 
 os.environ["OPENAI_API_KEY"] = "sk-.."
@@ -96,6 +96,8 @@ if __name__ == "__main__":
         (SQLTableSchema(table_name="city_stats"))
     ]  # add a SQLTableSchema for each table
 
+    from llama_index.core.embeddings import resolve_embed_model
+    Settings.embed_model = resolve_embed_model("local:embed_model/bge-small-en-v1.5")
     obj_index = ObjectIndex.from_objects(
         table_schema_objs,
         table_node_mapping,

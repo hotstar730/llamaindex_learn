@@ -2,8 +2,11 @@ import os
 
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings, ServiceContext, SummaryIndex
 from llama_index.llms.ollama import Ollama
+import datetime
 
 if __name__ == "__main__":
+    print(datetime.datetime.now())
+
     # 定义你的LLM
     llm = Ollama(model="qwen:7b-chat")
     llm.base_url = "http://1.92.64.112:11434"
@@ -19,6 +22,9 @@ if __name__ == "__main__":
     index = SummaryIndex.from_documents(documents, service_context=service_context)
 
     # 查询和打印结果
-    query_engine = index.as_query_engine()
-    response = query_engine.query("introduce me Paul Graham")
-    print(response)
+    query_engine = index.as_query_engine(streaming=True, similarity_top_k=1)
+    print(datetime.datetime.now())
+    query_engine.query("introduce me Paul Graham").print_response_stream()
+    print(datetime.datetime.now())
+    query_engine.query("introduce me Paul Graham").print_response_stream()
+    print(datetime.datetime.now())

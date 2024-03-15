@@ -8,6 +8,7 @@
     创建者：   lixinxin
     创建日期： 2024/3/14 13:47
 """
+import datetime
 import os
 import openai
 from llama_index.core import SQLDatabase
@@ -82,6 +83,7 @@ if __name__ == "__main__":
     llm.temperature = 0.2
     llm.base_url = "http://1.92.64.112:11434"
 
+    print(datetime.datetime.now())
     query_engine = NLSQLTableQueryEngine(
         sql_database=sql_database, tables=["city_stats"], llm=llm
     )
@@ -89,3 +91,4 @@ if __name__ == "__main__":
     response = query_engine.query(query_str)
     print(response)
     display(Markdown(f"<b>{response}</b>"))
+    print(datetime.datetime.now())

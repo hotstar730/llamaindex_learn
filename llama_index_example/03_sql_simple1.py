@@ -11,7 +11,7 @@
 import datetime
 import os
 import openai
-from llama_index.core import SQLDatabase
+from llama_index.core import SQLDatabase, VectorStoreIndex
 from llama_index.llms.ollama import Ollama
 
 os.environ["OPENAI_API_KEY"] = "sk-.."
@@ -76,8 +76,6 @@ if __name__ == "__main__":
         for row in rows:
             print(row)
 
-    from llama_index.core.query_engine import NLSQLTableQueryEngine
-
     # 定义你的LLM
     llm = Ollama(model="pxlksr/defog_sqlcoder-7b-2:Q8")
     llm.temperature = 0.2
@@ -91,7 +89,6 @@ if __name__ == "__main__":
         ObjectIndex,
         SQLTableSchema,
     )
-    from llama_index.core import VectorStoreIndex
 
     # set Logging to DEBUG for more detailed outputs
     table_node_mapping = SQLTableNodeMapping(sql_database)
@@ -101,15 +98,13 @@ if __name__ == "__main__":
 
     obj_index = ObjectIndex.from_objects(
         table_schema_objs,
-        table_node_mapping
+        table_node_mapping,
+        VectorStoreIndex
     )
     print(datetime.datetime.now())
     query_engine = SQLTableRetrieverQueryEngine(
         sql_database, obj_index.as_retriever(similarity_top_k=1), llm=llm
     )
-    # query_engine = NLSQLTableQueryEngine(
-    #     sql_database=sql_database, tables=["city_stats"], llm=llm
-    # )
     query_str = "Which city has the highest population?"
     response = query_engine.query(query_str)
     print(response)

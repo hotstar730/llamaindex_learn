@@ -5,7 +5,7 @@ from llama_index.llms.ollama import Ollama
 
 if __name__ == "__main__":
     # 定义你的LLM
-    llm = Ollama(model="gemma:2b")
+    llm = Ollama(model="qwen:7b-chat")
     llm.base_url = "http://1.92.64.112:11434"
 
     # 定义你的服务上下文

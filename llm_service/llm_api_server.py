@@ -6,10 +6,20 @@ from llama_index.core.base.llms.types import ChatMessage
 
 from llm_service.agents.agent_chat import AgentChat
 from llm_service.agents.agent_document import AgentDocument
+import os
+
+import openai
+
+# 没有用到，不填会报错
+from llm_service.agents.agent_sql import AgentSql
+
+os.environ["OPENAI_API_KEY"] = "sk-.."
+openai.api_key = os.environ["OPENAI_API_KEY"]
 
 # 不同的代理对象，用于聊天、查知识库、查数据表等
 agent_chat = AgentChat()
 agent_document = AgentDocument()
+agent_sql = AgentSql()
 
 user_chat_history = {}
 user_chat_len = 10
@@ -58,6 +68,10 @@ def chat():
         return jsonify({"response": str(response.content)})
     elif type == 2:
         response = agent_document.chat(chat_history)
+        chat_history.append(response)
+        return jsonify({"response": str(response.content)})
+    elif type == 3:
+        response = agent_sql.chat(chat_history)
         chat_history.append(response)
         return jsonify({"response": str(response.content)})
     else:

@@ -1,8 +1,8 @@
+import datetime
 import os
 
-from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings, ServiceContext, SummaryIndex
+from llama_index.core import SimpleDirectoryReader, ServiceContext, SummaryIndex
 from llama_index.llms.ollama import Ollama
-import datetime
 
 if __name__ == "__main__":
     print(datetime.datetime.now())

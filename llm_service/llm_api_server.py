@@ -11,7 +11,7 @@ import os
 import openai
 
 # 没有用到，不填会报错
-from llm_service.agents.agent_sql import AgentSql
+from llm_service.agents.agent_sql2 import AgentSql
 
 os.environ["OPENAI_API_KEY"] = "sk-.."
 openai.api_key = os.environ["OPENAI_API_KEY"]

@@ -13,7 +13,7 @@ llm.temperature = 0.2
 llm.base_url = "http://1.92.64.112:11434"
 
 # 定义你的服务上下文
-model_dir = os.path.abspath('embed_model/bge-small-en-v1.5')
+model_dir = os.path.abspath('data/embed_model/bge-small-en-v1.5')
 service_context = ServiceContext.from_defaults(
     llm=llm, embed_model="local:" + model_dir
 )

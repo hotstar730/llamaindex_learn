@@ -97,7 +97,7 @@ if __name__ == "__main__":
     ]  # add a SQLTableSchema for each table
 
     from llama_index.core.embeddings import resolve_embed_model
-    Settings.embed_model = resolve_embed_model("local:embed_model/bge-small-en-v1.5")
+    Settings.embed_model = resolve_embed_model("local:data/embed_model/bge-small-en-v1.5")
     obj_index = ObjectIndex.from_objects(
         table_schema_objs,
         table_node_mapping,

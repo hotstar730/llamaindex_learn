@@ -8,16 +8,13 @@
     创建者：   lixinxin
     创建日期： 2024/3/14 13:47
 """
+
 import os
+
 import openai
+from IPython.display import Markdown, display
 from llama_index.core import SQLDatabase
 from llama_index.llms.ollama import Ollama
-
-os.environ["OPENAI_API_KEY"] = "sk-.."
-openai.api_key = os.environ["OPENAI_API_KEY"]
-
-from IPython.display import Markdown, display
-
 from sqlalchemy import (
     create_engine,
     MetaData,
@@ -25,52 +22,41 @@ from sqlalchemy import (
     Column,
     String,
     Integer,
-    select,
 )
 
-from datetime import date
-from xlrd import open_workbook, xldate_as_tuple
-import os
+from llm_service.util.excel_util import ExcelUtil
 
-def read_excel(path, file_name, sheet):
+os.environ["OPENAI_API_KEY"] = "sk-.."
+openai.api_key = os.environ["OPENAI_API_KEY"]
+
+def read_excel(filename, sheet):
     res = []
-    with open_workbook(os.path.join(path, file_name+'.xlsx')) as workbook:
-        worksheet = workbook.sheet_by_name(sheet)
-        for row_index in range(0, worksheet.nrows):
-            # 获取列名
-            if row_index == 0:
-                col_name = [worksheet.cell_value(0, i) for i in range(worksheet.ncols)]
-                continue
-            map = {}
-            for col_index in range(worksheet.ncols):
-                # 判断单元格里的值是否是日期
-                if worksheet.cell_type(row_index, col_index) == 3:
-                    # 先将单元格里的表示日期数值转换成元组
-                    date_cell = xldate_as_tuple(worksheet.cell_value(row_index, col_index), workbook.datemode)
-                    # 使用元组的索引来引用元组的前三个元素并将它们作为参数传递给date函数来转换成date对象，用strftime()函数来将date对象转换成特定格式的字符串
-                    date_cell = date(*date_cell[:3]).strftime('%Y/%m/%d')
-                    map[worksheet.cell_value(0, col_index)] = date_cell
-                else:
-                    # 将sheet中非表示日期的值赋给non_date_celld对象
-                    non_date_cell = worksheet.cell_value(row_index, col_index)
-                    map[worksheet.cell_value(0, col_index)] = non_date_cell
-            res.append(map)
-    return col_name, res
+    ex = ExcelUtil(filename)
+    max_row = ex.get_max_row()
+    head = []
+    for j in range(max_row):
+        i = j + 1
+        if i == 1:
+            head = ex.get_row_value(i)
+            continue
+
+        map = {}
+        row = ex.get_row_value(i)
+        for r in range(len(row)):
+            map[head[r]] = row[r]
+        print(i, " ", row)
+        res.append(map)
+
+    return head, res
 
 if __name__ == "__main__":
     engine = create_engine("sqlite:///:memory:")
     metadata_obj = MetaData()
 
-    # create city SQL table
-    # table_name = "city_stats"
-    # path = input("请输入数据所在路径：")
-    # table_name = input("请输入表名：")
-    # sheet = input("请输入sheet名：")
-
-    path = 'test-data/'
-    table_name = 'test'
     sheet = 'Sheet1'
-    col_name, rows = read_excel(path, table_name, sheet)
+    filepath = './data/excel/test.xlsx'
+    table_name = os.path.splitext(os.path.basename(filepath))[0]
+    col_name, rows = read_excel(filepath, sheet)
 
     city_stats_table = Table(
         table_name,

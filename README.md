@@ -1,8 +1,9 @@
-# llamaindex_learn
-无
+
 
 # 运行程序
 ```
+conda activate llama-index
+
 flask --app llm_api_server.py
 python3 llm_api_server.py
 ```

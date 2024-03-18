@@ -16,3 +16,4 @@ pip install -r requirements.txt
 ```
 yum install python3-devel mysql-devel pkgconfig
 ```
+参考：https://blog.csdn.net/qwe1314225/article/details/132150159

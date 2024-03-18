@@ -36,7 +36,7 @@ class AgentSql(AgentBase):
         table_name = os.path.splitext(os.path.basename(filepath))[0]
 
         self.meta_data = MetaData()
-        self.engine = create_engine("mysql://root:@localhost/testdb", pool_recycle=3306, echo=True)
+        self.engine = create_engine("mysql://root:Foton12345&@1.92.64.112/llama", pool_recycle=3306, echo=True)
         self.meta_data.create_all(self.engine)
         self.database = SQLDatabase(self.engine, include_tables=[table_name])
 

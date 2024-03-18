@@ -4,14 +4,14 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from llama_index.core.base.llms.types import ChatMessage
 
-from llm_service.agents.agent_chat import AgentChat
-from llm_service.agents.agent_document import AgentDocument
+from agents.agent_chat import AgentChat
+from agents.agent_document import AgentDocument
 import os
 
 import openai
 
 # 没有用到，不填会报错
-from llm_service.agents.agent_sql import AgentSql
+from agents.agent_sql import AgentSql
 
 os.environ["OPENAI_API_KEY"] = "sk-.."
 openai.api_key = os.environ["OPENAI_API_KEY"]

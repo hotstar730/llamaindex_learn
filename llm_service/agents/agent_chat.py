@@ -5,7 +5,7 @@ import nest_asyncio
 from llama_index.core.llms import ChatMessage
 from llama_index.llms.ollama import Ollama
 
-from llm_service.agents.agent_base import AgentBase
+from agents.agent_base import AgentBase
 
 nest_asyncio.apply()
 

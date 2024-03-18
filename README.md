@@ -12,3 +12,7 @@ python3 llm_api_server.py
 pip install -r requirements.txt
 ```
 
+# 安装mysql包需要安装
+```
+yum install python3-devel mysql-devel pkgconfig
+```

@@ -23,8 +23,8 @@ from sqlalchemy import (
     text,
 )
 
-from llm_service.agents.agent_base import AgentBase
-from llm_service.util.excel_util import ExcelUtil
+from agents.agent_base import AgentBase
+from util.excel_util import ExcelUtil
 
 
 class AgentSql(AgentBase):

@@ -10,9 +10,9 @@
     需要使用mysql数据进行测试
 """
 
-import os
 from typing import List
 
+from agents.agent_base import AgentBase
 from llama_index.core import SQLDatabase
 from llama_index.core.indices.struct_store import NLSQLTableQueryEngine
 from llama_index.core.llms import ChatMessage
@@ -22,23 +22,19 @@ from sqlalchemy import (
     MetaData,
     text,
 )
-
-from agents.agent_base import AgentBase
 from util.excel_util import ExcelUtil
 
 
 class AgentSql(AgentBase):
 
     def __init__(self) -> None:
-        filepath = './data/excel/test.xlsx'
-        print("init")
-        filepath = './data/excel/test.xlsx'
-        table_name = os.path.splitext(os.path.basename(filepath))[0]
+        # 需要加载了表
+        table_name = ['test']
 
         self.meta_data = MetaData()
         self.engine = create_engine("mysql://root:Foton12345&@1.92.64.112/llama", pool_recycle=3306, echo=True)
         self.meta_data.create_all(self.engine)
-        self.database = SQLDatabase(self.engine, include_tables=[table_name])
+        self.database = SQLDatabase(self.engine, include_tables=table_name)
 
         # 读取成功
         self.connect = self.database.engine.connect()
@@ -53,7 +49,7 @@ class AgentSql(AgentBase):
 
         # 查询引擎
         self.query_engine = NLSQLTableQueryEngine(
-            sql_database=self.database, tables=[table_name], llm=self.llm
+            sql_database=self.database, tables=table_name, llm=self.llm
         )
 
     def _read_excel(self, filename):
@@ -77,11 +73,6 @@ class AgentSql(AgentBase):
         return data_rows
 
     def chat(self, messages: List[ChatMessage]) -> ChatMessage:
-        # self.metadata_obj.create_all(self.sql_database.engine)
-        rows = self.connect.execute(text("SELECT vin from test"))
-        for row in rows:
-            print(row)
-
         if messages:
             message = messages[-1]
             self.query_engine.update_prompts('use mysql database')

@@ -56,28 +56,29 @@ def chat():
     if user_chat_history.get(userId) is None:
         user_chat_history[userId]: List[ChatMessage] = []
     chat_history = user_chat_history[userId]
-    try:
-        chat_history.append(ChatMessage(role="user", content=query))
-    except:
-        user_chat_history[userId] = []
+    chat_history.append(ChatMessage(role="user", content=query))
     if len(chat_history) >= user_chat_len:
         chat_history = chat_history[len(chat_history) - user_chat_len:]
 
     # 通过type，判断调用的agent
     # 通过stream，调用不同的接口
-    if type == 1:
-        response = agent_chat.chat(chat_history)
-        chat_history.append(response)
-        return jsonify({"response": str(response.content)})
-    elif type == 2:
-        response = agent_document.chat(chat_history)
-        chat_history.append(response)
-        return jsonify({"response": str(response.content)})
-    elif type == 3:
-        response = agent_sql.chat(chat_history)
-        chat_history.append(response)
-        return jsonify({"response": str(response.content)})
-    else:
+    try:
+        if type == 1:
+            response = agent_chat.chat(chat_history)
+            chat_history.append(response)
+            return jsonify({"response": str(response.content)})
+        elif type == 2:
+            response = agent_document.chat(chat_history)
+            chat_history.append(response)
+            return jsonify({"response": str(response.content)})
+        elif type == 3:
+            response = agent_sql.chat(chat_history)
+            chat_history.append(response)
+            return jsonify({"response": str(response.content)})
+        else:
+            return jsonify({"error": "type field is incorrect"}), 400
+    except:
+        user_chat_history[userId] = []
         return jsonify({"error": "type field is incorrect"}), 400
 
 

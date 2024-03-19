@@ -56,7 +56,10 @@ def chat():
     if user_chat_history.get(userId) is None:
         user_chat_history[userId]: List[ChatMessage] = []
     chat_history = user_chat_history[userId]
-    chat_history.append(ChatMessage(role="user", content=query))
+    try:
+        chat_history.append(ChatMessage(role="user", content=query))
+    except:
+        user_chat_history[userId] = []
     if len(chat_history) >= user_chat_len:
         chat_history = chat_history[len(chat_history) - user_chat_len:]
 

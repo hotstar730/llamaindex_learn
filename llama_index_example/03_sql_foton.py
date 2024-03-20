@@ -24,7 +24,7 @@ from sqlalchemy import (
     Integer,
 )
 
-from llm_service.util.excel_util import ExcelUtil
+from llama_index_service.util.excel_util import ExcelUtil
 
 os.environ["OPENAI_API_KEY"] = "sk-.."
 openai.api_key = os.environ["OPENAI_API_KEY"]

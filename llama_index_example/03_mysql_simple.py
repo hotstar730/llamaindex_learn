@@ -3,30 +3,27 @@
 
 """
     项目名称:  llamaindex_learn
-    文件名称： 03_sql_simple.py
+    文件名称： 03_sql_simple1.py
     功能描述： ..
     创建者：   lixinxin
     创建日期： 2024/3/14 13:47
-    需要使用mysql数据进行测试
 """
+import os
 
-from typing import List
-
-from agent_base import AgentBase
 from llama_index.core import SQLDatabase
 from llama_index.core.indices.struct_store import NLSQLTableQueryEngine
 from llama_index.core.llms import ChatMessage
+from llama_index.llms import openai
 from llama_index.llms.ollama import Ollama
 from sqlalchemy import (
     create_engine,
     MetaData,
-    text,
 )
+
 from util.excel_util import ExcelUtil
 
 
-class AgentSql(AgentBase):
-
+class AgentSql:
     def __init__(self) -> None:
         # 需要加载了表
         table_name = ['test']
@@ -35,12 +32,6 @@ class AgentSql(AgentBase):
         self.engine = create_engine("mysql://root:Foton12345&@1.92.64.112/llama", pool_recycle=3306, echo=True)
         self.meta_data.create_all(self.engine)
         self.database = SQLDatabase(self.engine, include_tables=table_name)
-
-        # 读取成功
-        self.connect = self.database.engine.connect()
-        rows = self.connect.execute(text("SELECT vin from test"))
-        for row in rows:
-            print(row)
 
         # 定义你的LLM
         self.llm = Ollama(model="pxlksr/defog_sqlcoder-7b-2:Q8")
@@ -72,11 +63,17 @@ class AgentSql(AgentBase):
 
         return data_rows
 
-    def chat(self, messages: List[ChatMessage]) -> ChatMessage:
-        if messages:
-            message = messages[-1]
+    def chat(self, message: str) -> ChatMessage:
+        if message:
             self.query_engine.update_prompts('use mysql database')
-            response = self.query_engine.query(message.content + "")
+            response = self.query_engine.query(message)
+            print(response.metadata["sql_query"])
             return ChatMessage(role="assistant", content=response)
         else:
             return ChatMessage(role="assistant", content="can i help you!")
+
+os.environ["OPENAI_API_KEY"] = "sk-.."
+openai.api_key = os.environ["OPENAI_API_KEY"]
+agent_sql = AgentSql()
+response = agent_sql.chat("经销商有哪些")
+print(response)

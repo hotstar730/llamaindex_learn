@@ -62,6 +62,6 @@ chain.get_prompts()[0].pretty_print()
 result = chain.invoke({"question": "在test表中车辆总数有多少?"})
 print(result)
 
-# print(chain.invoke({"input": "Describe the schema of the test table"}))
+print(chain.invoke({"question": "Describe the schema of the Invoice table"}))
 
 

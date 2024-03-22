@@ -44,6 +44,7 @@ Output the final SQL query only.
 prompt = ChatPromptTemplate.from_messages(
     [("system", system), ("human", "{query}")]
 ).partial(dialect=db.dialect)
+print("1=====================================================")
 prompt.pretty_print()
 validation_chain = prompt | llm | StrOutputParser()
 

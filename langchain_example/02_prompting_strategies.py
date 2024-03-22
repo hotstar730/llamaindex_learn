@@ -131,5 +131,6 @@ prompt = FewShotPromptTemplate(
 print(prompt.format(input="how many artists are there?", top_k=3, table_info="foo"))
 
 chain = create_sql_query_chain(llm, db, prompt)
+prompt_with_context = chain.get_prompts()[0].partial(table_info=context["table_info"])
 ret = chain.invoke({"question": "how many artists are there?"})
 print(ret)

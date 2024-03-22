@@ -23,33 +23,32 @@ llm.temperature = 0.3
 llm.base_url = "http://1.92.64.112:11434"
 chain = create_sql_query_chain(llm, db)
 chain.get_prompts()[0].pretty_print()
+response = chain.invoke({"question": "What's the average Invoice from an American customer whose Fax is missing since 2003 but before 2010"})
+print(response)
 
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
 system = """Double check the user's MySQL query for common mistakes, including:
-- Using NOT IN with NULL values
-- Using UNION when UNION ALL should have been used
-- Using BETWEEN for exclusive ranges
-- Data type mismatch in predicates
-- Properly quoting identifiers
-- Using the correct number of arguments for functions
-- Casting to the correct data type
-- Using the proper columns for joins
-
-If there are any of the above mistakes, rewrite the query. If there are no mistakes, just reproduce the original query.
-
-Output the final SQL query only.
-"""
-prompt = ChatPromptTemplate.from_messages(
-    [("system", system), ("human", "{query}")]
-).partial(dialect=db.dialect)
+        - Using NOT IN with NULL values
+        - Using UNION when UNION ALL should have been used
+        - Using BETWEEN for exclusive ranges
+        - Data type mismatch in predicates
+        - Properly quoting identifiers
+        - Using the correct number of arguments for functions
+        - Casting to the correct data type
+        - Using the proper columns for joins
+        
+        If there are any of the above mistakes, rewrite the query. If there are no mistakes, just reproduce the original query.
+        
+        Output the final SQL query only.
+        """
+prompt = ChatPromptTemplate.from_messages([("system", system), ("human", "{query}")]).partial(dialect=db.dialect)
 print("1=====================================================")
 prompt.pretty_print()
 validation_chain = prompt | llm | StrOutputParser()
 
 full_chain = {"query": chain} | validation_chain
-
 query = full_chain.invoke(
     {
         "question": "What's the average Invoice from an American customer whose Fax is missing since 2003 but before 2010"

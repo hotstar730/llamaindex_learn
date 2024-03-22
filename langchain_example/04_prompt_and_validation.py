@@ -44,21 +44,6 @@ prompt = ChatPromptTemplate.from_messages(
     [("system", system), ("human", "{query}")]
 ).partial(dialect=db.dialect)
 validation_chain = prompt | llm | StrOutputParser()
-
-# test
-result = chain.invoke(({"question": "What's the average Invoice from an American customer whose Fax is missing since 2003 but before 2010"}))
-print(result)
-# SELECT AVG(o.invoice) AS average_invoice FROM orders o JOIN customers c ON o.customer = c.id WHERE c.country ILIKE '%american%' AND c.fax IS NULL AND EXTRACT(YEAR FROM o.orderdate::DATE) BETWEEN 2003 AND 2010;
-
-result = validation_chain.invoke({"query": "SELECT AVG(o.invoice) AS average_invoice FROM orders o JOIN customers c ON o.customer = c.id WHERE c.country ILIKE '%american%' AND c.fax IS NULL AND EXTRACT(YEAR FROM o.orderdate::DATE) BETWEEN 2003 AND 2010;"})
-print(result)
-
-result = validation_chain.invoke({"query": "What's the average Invoice from an American customer whose Fax is missing since 2003 but before 2010"})
-print(result)
-# "SELECT AVG(i.total_amount) AS average_total_amount FROM invoices i JOIN customers c ON i.customer_id = c.id WHERE c.country_code = 'US' AND c.fax IS NULL AND EXTRACT(YEAR FROM i.invoice_date) BETWEEN 2003 AND 2010;"
-
-
-
 full_chain = {"query": chain} | validation_chain
 
 query = full_chain.invoke(

@@ -80,10 +80,6 @@ examples = [
         "input": "How many employees are there",
         "query": 'SELECT COUNT(*) FROM "Employee"',
     },
-    {
-        "input": "how many artists are there",
-        "query": 'SELECT COUNT(DISTINCT a.ArtistId) AS artist_count FROM Artist a;',
-    },
 ]
 
 from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate

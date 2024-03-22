@@ -19,7 +19,7 @@ ret = db.run("SELECT * FROM test LIMIT 10;")
 
 # Query checker
 llm = Ollama(model="pxlksr/defog_sqlcoder-7b-2:Q8")
-llm.temperature = 0.3
+llm.temperature = 0
 llm.base_url = "http://1.92.64.112:11434"
 chain = create_sql_query_chain(llm, db)
 chain.get_prompts()[0].pretty_print()

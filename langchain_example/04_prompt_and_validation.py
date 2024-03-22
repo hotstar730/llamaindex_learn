@@ -16,33 +16,27 @@ from langchain_experimental.sql import SQLDatabaseChain
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
-db = SQLDatabase.from_uri("mysql+pymysql://root:Foton12345&@1.92.64.112/llama")
-print(db.dialect)
-print(db.get_usable_table_names())
 
-# 定义你的LLM
+db = SQLDatabase.from_uri("mysql+pymysql://root:Foton12345&@1.92.64.112/llama")
 llm = Ollama(model="pxlksr/defog_sqlcoder-7b-2:Q8")
 llm.temperature = 0
 llm.base_url = "http://1.92.64.112:11434"
-
 chain = create_sql_query_chain(llm, db)
 
 system = """Double check the user's {dialect} query for common mistakes, including:
-- Using NOT IN with NULL values
-- Using UNION when UNION ALL should have been used
-- Using BETWEEN for exclusive ranges
-- Data type mismatch in predicates
-- Properly quoting identifiers
-- Using the correct number of arguments for functions
-- Casting to the correct data type
-- Using the proper columns for joins
-
-If there are any of the above mistakes, rewrite the query. If there are no mistakes, just reproduce the original query.
-
-Output the final SQL query only."""
-prompt = ChatPromptTemplate.from_messages(
-    [("system", system), ("human", "{query}")]
-).partial(dialect=db.dialect)
+    - Using NOT IN with NULL values
+    - Using UNION when UNION ALL should have been used
+    - Using BETWEEN for exclusive ranges
+    - Data type mismatch in predicates
+    - Properly quoting identifiers
+    - Using the correct number of arguments for functions
+    - Casting to the correct data type
+    - Using the proper columns for joins
+    
+    If there are any of the above mistakes, rewrite the query. If there are no mistakes, just reproduce the original query.
+    
+    Output the final SQL query only."""
+prompt = ChatPromptTemplate.from_messages([("system", system), ("human", "{query}")]).partial(dialect=db.dialect)
 validation_chain = prompt | llm | StrOutputParser()
 full_chain = {"query": chain} | validation_chain
 

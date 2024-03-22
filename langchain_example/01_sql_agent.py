@@ -9,59 +9,47 @@
     创建日期： 2024/3/20 9:14
     验证成功。
 """
+from langchain.agents import AgentType
 from langchain.chains.sql_database.query import create_sql_query_chain
 from langchain_community.llms.ollama import Ollama
 from langchain_community.utilities.sql_database import SQLDatabase
 from langchain_experimental.sql import SQLDatabaseChain
 
+# 现在，db位于我们的目录中，我们可以使用 SQLAlchemy 驱动的SQLDatabase类与其进行交互：
 db = SQLDatabase.from_uri("mysql+pymysql://root:Foton12345&@1.92.64.112/llama")
+context = db.get_context()
+print(list(context))
+print(context["table_info"])
 # print(db.dialect)
 # print(db.get_usable_table_names())
-# result = db.run("SELECT * FROM test LIMIT 10;")
+# print(db.get_table_info())
+# result = db.run("SELECT * FROM Artist LIMIT 10;")
 # print(result)
 
-# 定义你的LLM
+# 我们将使用 聊天模型和"openai-tools"代理，代理将使用 OpenAI 的函数调用 API 来驱动代理的工具选择和调用。
 llm = Ollama(model="pxlksr/defog_sqlcoder-7b-2:Q8")
 llm.temperature = 0
 llm.base_url = "http://1.92.64.112:11434"
 
-# db_chain = SQLDatabaseChain(llm=llm, database=db, verbose=True)
-# db_chain.run("车辆总数有多少?")
+chain = create_sql_query_chain(llm, db)
 
-from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 
-execute_query = QuerySQLDataBaseTool(db=db)
-write_query = create_sql_query_chain(llm, db)
-# chain = write_query | execute_query
-# print(chain.invoke({"question": "车辆总数有多少?"}))
+print("=====================================================")
+prompt_with_context = chain.get_prompts()[0].partial(table_info=context["table_info"])
+print(prompt_with_context.pretty_repr())
 
-# 创建一个简单的链，它接受一个问题，将其转换为 SQL 查询，执行查询，并使用结果来回答原始问题。
-from operator import itemgetter
+response = chain.invoke({"question": "List the total sales per country. Which country's customers spent the most?"})
+print(response)
+print("=====================================================")
+prompts = chain.get_prompts()
+print(chain.get_prompts())
 
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnablePassthrough
+from langchain_community.agent_toolkits import create_sql_agent
+# agent_executor = create_sql_agent(llm, db=db, agent_type="zero-shot-react-description", return_intermediate_steps=True, verbose=True, agent_executor_kwargs={"handle_parsing_errors": True})
+agent_executor = create_sql_agent(llm, db=db, verbose=True, agent_executor_kwargs={"handle_parsing_errors": True})
 
-answer_prompt = PromptTemplate.from_template(
-    """Given the following user question, corresponding SQL query, and SQL result, answer the user question.
-    Question: {question}
-    SQL Query: {query}
-    SQL Result: {result}
-    Answer: "Final answer here"
-    """
-    )
-
-answer = answer_prompt | llm | StrOutputParser()
-chain = (
-        RunnablePassthrough.assign(query=write_query).assign(
-            result=itemgetter("query") | execute_query
-        )
-        | answer
+response = agent_executor.invoke(
+    "List the total sales per country. Which country's customers spent the most?"
 )
-chain.get_prompts()[0].pretty_print()
-result = chain.invoke({"question": "在test表中车辆总数有多少?"})
-print(result)
-
-print(chain.invoke({"question": "Describe the schema of the Invoice table"}))
-
-
+print(response)
+exit(0)

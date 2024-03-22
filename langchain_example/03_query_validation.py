@@ -54,6 +54,6 @@ query = full_chain.invoke(
         "question": "What's the average Invoice from an American customer whose Fax is missing since 2003 but before 2010"
     }
 )
-query
+print(query)
 ret = db.run(query)
 print(ret)

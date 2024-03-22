@@ -34,14 +34,15 @@ llm.base_url = "http://1.92.64.112:11434"
 chain = create_sql_query_chain(llm, db)
 
 
-print("=====================================================")
+print("1=====================================================")
 prompt_with_context = chain.get_prompts()[0].partial(table_info=context["table_info"])
 print(prompt_with_context.pretty_repr())
 
 response = chain.invoke({"question": "List the total sales per country. Which country's customers spent the most?"})
+print("2=====================================================")
 print(response)
-print("=====================================================")
 prompts = chain.get_prompts()
+print("3=====================================================")
 print(chain.get_prompts())
 
 from langchain_community.agent_toolkits import create_sql_agent

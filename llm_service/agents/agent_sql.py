@@ -12,7 +12,7 @@
 
 from typing import List
 
-from agent_base import AgentBase
+from agents.agent_base import AgentBase
 from llama_index.core import SQLDatabase
 from llama_index.core.indices.struct_store import NLSQLTableQueryEngine
 from llama_index.core.llms import ChatMessage

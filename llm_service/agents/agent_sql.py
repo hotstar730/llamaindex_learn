@@ -12,7 +12,6 @@
 
 from typing import List
 
-from agents.agent_base import AgentBase
 from llama_index.core import SQLDatabase
 from llama_index.core.indices.struct_store import NLSQLTableQueryEngine
 from llama_index.core.llms import ChatMessage
@@ -22,14 +21,15 @@ from sqlalchemy import (
     MetaData,
     text,
 )
-from util.excel_util import ExcelUtil
+from llm_service.util.excel_util import ExcelUtil
+from llm_service.agents.agent_base import AgentBase
 
 
 class AgentSql(AgentBase):
 
     def __init__(self) -> None:
         # 需要加载了表
-        table_name = ['test']
+        table_name = ['盘点结果']
 
         self.meta_data = MetaData()
         self.engine = create_engine("mysql://root:Foton12345&@1.92.64.112/llama", pool_recycle=3306, echo=True)
@@ -38,7 +38,7 @@ class AgentSql(AgentBase):
 
         # 读取成功
         self.connect = self.database.engine.connect()
-        rows = self.connect.execute(text("SELECT vin from test"))
+        rows = self.connect.execute(text("SELECT vin from 盘点结果 limit 10"))
         for row in rows:
             print(row)
 

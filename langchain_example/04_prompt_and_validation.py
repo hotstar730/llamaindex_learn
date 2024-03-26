@@ -9,6 +9,7 @@
     创建日期： 2024/3/20 9:14
 """
 from langchain.chains.sql_database.query import create_sql_query_chain
+from langchain.globals import set_verbose, set_debug
 from langchain_community.llms.ollama import Ollama
 from langchain_community.utilities.sql_database import SQLDatabase
 from langchain_core.output_parsers import StrOutputParser
@@ -103,8 +104,12 @@ prompt = FewShotPromptTemplate(
 print(prompt.format(input="how many artists are there?", top_k=3, table_info=context["table_info"]))
 prompt.pretty_print()
 
-execute_query = QuerySQLDataBaseTool(db=db)
 write_query = create_sql_query_chain(llm, db, prompt)
+print(write_query.invoke({"question": "What's the average Invoice from an American customer whose Fax is missing since 2003 but before 2010?"}))
+execute_query = QuerySQLDataBaseTool(db=db)
+
+print("======================================================================")
+set_debug(True)
 chain = write_query | execute_query
-ret = chain.invoke({"question": "how many artists are there?"})
+ret = chain.invoke({"question": "What's the average Invoice from an American customer whose Fax is missing since 2003 but before 2010?"})
 print(ret)

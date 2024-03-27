@@ -7,7 +7,7 @@ from langchain_core.example_selectors import SemanticSimilarityExampleSelector
 from langchain_community.embeddings import HuggingFaceEmbeddings
 import sys
 sys.path.append('..')
-from llm_service.util.mysql import MysqlUtil
+from llm_service.util.mysql_util import MysqlUtil
 
 db = SQLDatabase.from_uri("mysql+pymysql://root:Foton12345&@1.92.64.112/llama", sample_rows_in_table_info=3)
 
@@ -30,14 +30,14 @@ print(examples)
 
 example_prompt = PromptTemplate.from_template("User input: {input}\nSQL query: {query}")
 prompt = FewShotPromptTemplate(
-    examples=examples[:5],
+    examples=examples,
     example_prompt=example_prompt,
     prefix="You are a MySQL expert. Given an input question, create a syntactically correct SQLite query to run. Unless otherwise specificed, do not return more than {top_k} rows.\n\nHere is the relevant table info: {table_info}\n\nBelow are a number of examples of questions and their corresponding SQL queries.",
     suffix="User input: {input}\nSQL query: ",
     input_variables=["input", "top_k", "table_info"],
 )
 
-modelPath = '/Users/amalyok/Desktop/foton/llamaindex_learn/langchain_example/bge-small-en-v1.5'
+modelPath = 'bge-small-en-v1.5'
 model_kwargs = {'device':'cpu'}
 encode_kwargs = {'normalize_embeddings': True}
 embeddings = HuggingFaceEmbeddings(

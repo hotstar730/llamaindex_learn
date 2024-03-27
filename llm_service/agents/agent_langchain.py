@@ -18,6 +18,7 @@ from langchain_community.utilities.sql_database import SQLDatabase
 from langchain_community.vectorstores import FAISS
 from langchain_core.example_selectors import SemanticSimilarityExampleSelector
 from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate
+from langchain_experimental.sql import SQLDatabaseChain
 from llama_index.core.base.llms.types import ChatMessage
 
 from llm_service.util.mysql_util import MysqlUtil
@@ -42,7 +43,8 @@ class AgentLangChainSql:
         self._prompt = self._get_prompt()
 
         # get chain
-        self.chain = create_sql_query_chain(self._llm, self._db, self._prompt)
+        # self.chain = create_sql_query_chain(self._llm, self._db, self._prompt)
+        self.chain = SQLDatabaseChain.from_llm(self._llm, self._db, self._prompt, verbose=False)
 
     def _get_examples(self) -> []:
         # 从配置表中读取提示信息
@@ -86,6 +88,14 @@ class AgentLangChainSql:
         )
         return prompt
 
+    def _get_tips_example(self, message) -> str:
+        response_example = ""
+        examples = self._example_selector.select_examples({"input": message})
+        for i, j in enumerate(examples):
+            response_example += '\n' + str(i + 1) + "." + j['input']
+        print(examples)
+        return response_example
+
     def chat(self, messages: List[ChatMessage]) -> ChatMessage:
         if messages:
             message = messages[-1]
@@ -96,20 +106,16 @@ class AgentLangChainSql:
             return ChatMessage(role="assistant", content="can i help you!")
 
     def chat(self, message: str) -> str:
-        examples = self._example_selector.select_examples({"input": message})
-        response_example = ""
-        for i in examples:
-            response_example += '\n' + i['input']
-        print(examples)
-
         set_debug(True)
-        response = self.chain.invoke({"question": message})
-
-
+        # self.chain.return_sql = True
+        try:
+            response = self.chain.run(message)
+        except:
+            response = '暂无答案，请换个问题试试。eg：' + self._get_tips_example(message)
         return response
 
 
 agent_lang_chain = AgentLangChainSql()
 ret = agent_lang_chain.chat("盘点车辆总数")
+# ret = agent_lang_chain.chat("福田总部在哪")
 print(ret)
-

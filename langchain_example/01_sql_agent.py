@@ -16,7 +16,7 @@ from langchain_community.utilities.sql_database import SQLDatabase
 from langchain_experimental.sql import SQLDatabaseChain
 
 # 现在，db位于我们的目录中，我们可以使用 SQLAlchemy 驱动的SQLDatabase类与其进行交互：
-db = SQLDatabase.from_uri("mysql+pymysql://root:Foton12345&@1.92.64.112/llama")
+db = SQLDatabase.from_uri("mysql+pymysql://root:Foton12345&@1.92.64.112/test")
 context = db.get_context()
 print(list(context))
 print(context["table_info"])
@@ -50,7 +50,7 @@ from langchain_community.agent_toolkits import create_sql_agent
 agent_executor = create_sql_agent(llm, db=db, verbose=True, agent_executor_kwargs={"handle_parsing_errors": True})
 
 response = agent_executor.invoke(
-    "List the total sales per country. Which country's customers spent the most?"
+    "how many artists are there?"
 )
 print(response)
 exit(0)

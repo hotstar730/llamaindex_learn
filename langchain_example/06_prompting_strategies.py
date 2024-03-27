@@ -11,11 +11,12 @@
 from langchain.chains.sql_database.query import create_sql_query_chain
 from langchain_community.llms.ollama import Ollama
 from langchain_community.utilities.sql_database import SQLDatabase
+from langchain_experimental.sql import SQLDatabaseChain
 
-db = SQLDatabase.from_uri("mysql+pymysql://root:Foton12345&@1.92.64.112/llama", sample_rows_in_table_info=3)
+db = SQLDatabase.from_uri("mysql+pymysql://root:Foton12345&@1.92.64.112/test", sample_rows_in_table_info=3)
 print(db.dialect)
 print(db.get_usable_table_names())
-ret = db.run("SELECT vin from 盘点结果 limit 10;")
+# ret = db.run("SELECT vin from 盘点结果 limit 10;")
 
 # 1 Dialect-specific prompting
 llm = Ollama(model="pxlksr/defog_sqlcoder-7b-2:Q8")
@@ -130,7 +131,11 @@ prompt = FewShotPromptTemplate(
 )
 print(prompt.format(input="how many artists are there?", top_k=3, table_info="foo"))
 
-chain = create_sql_query_chain(llm, db, prompt)
-chain.get_prompts()[0].partial(table_info=context["table_info"])
-ret = chain.invoke({"question": "how many artists are there?"})
+# chain = create_sql_query_chain(llm, db, prompt)
+# chain.get_prompts()[0].partial(table_info=context["table_info"])
+# ret = chain.invoke({"question": "how many artists are there?"})
+# print(ret)
+
+db_chain = SQLDatabaseChain.from_llm(llm, db, prompt, verbose=True)
+ret = db_chain.run("how many artists are there？")
 print(ret)

@@ -106,7 +106,6 @@ class AgentLangChainSql:
         response = self.chain.invoke({"question": message})
 
 
-
         return response
 
 

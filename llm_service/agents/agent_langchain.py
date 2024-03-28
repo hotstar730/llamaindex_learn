@@ -128,46 +128,21 @@ class AgentLangChainSql:
     def chat(self, messages: List[ChatMessage]) -> ChatMessage:
         if not messages:
             return ChatMessage(role="assistant", content="can i help you!")
-
         message = messages[-1].content
 
         try:
             question = message
             query = self._chain_query.invoke({"question": question})
             result = self._db_execute.run(query)
-            response = self._chain_answer.invoke(
-                {
-                    "question": question,
-                    "query": query,
-                    "result": result
-                }
-            )
+            response = self._chain_answer.invoke({"question": question, "query": query, "result": result})
             self._db_save_query_result(message, query, response, 1)
         except:
             response = '暂无答案，请换个问题试试。eg：' + self._get_tips_example(message)
             self._db_save_query_result(message, "", response, 2)
         return ChatMessage(role="assistant", content=response)
 
-    def chat_debug(self, message: str) -> str:
-        try:
-            question = message
-            query = self._chain_query.invoke({"question": question})
-            result = self._db_execute.run(query)
-            response = self._chain_answer.invoke(
-                {
-                    "question": question,
-                    "query": query,
-                    "result": result
-                }
-            )
-            self._db_save_query_result(message, query, response, 1)
-        except:
-            response = '暂无答案，请换个问题试试。eg：' + self._get_tips_example(message)
-            self._db_save_query_result(message, "", response, 2)
-        return response
-
 
 agent_lang_chain = AgentLangChainSql(True)
-# ret = agent_lang_chain.chat_debug("盘点车辆总数")
-ret = agent_lang_chain.chat_debug("福田总部在哪")
+# ret = agent_lang_chain.chat([ChatMessage(role="assistant", content='盘点车辆总数')])
+ret = agent_lang_chain.chat([ChatMessage(role="assistant", content='福田总部在哪')])
 print(ret)

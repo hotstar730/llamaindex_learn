@@ -38,8 +38,13 @@ class AgentLangChainSql:
     _example_selector: SemanticSimilarityExampleSelector
     _mysql: MysqlUtil
     _chain: SQLDatabaseChain
+    _debug: False
 
-    def __init__(self) -> None:
+    def __init__(self, debug=False) -> None:
+        self._debug = debug
+        if self._debug:
+            set_debug(True)
+
         self._mysql = MysqlUtil(host='1.92.64.112', db='llama_config', user='root', passwd='Foton12345&')
 
         # 1 Dialect-specific prompting
@@ -53,16 +58,17 @@ class AgentLangChainSql:
         # 3 get prompt
         self._prompt = self._get_prompt()
 
+
+        write_query = create_sql_query_chain(self._llm, self._db, self._prompt)
+        execute_query = QuerySQLDataBaseTool(db=self._db)
+
         answer_prompt = PromptTemplate.from_template(
-                """Given the following user question, corresponding SQL query, and SQL result, answer the user question.
+            """Given the following user question, corresponding SQL query, and SQL result, answer the user question.
                 Question: {question}
                 SQL Query: {query}
                 SQL Result: {result}
                 Answer: """
-                )
-
-        write_query = create_sql_query_chain(self._llm, self._db, self._prompt)
-        execute_query = QuerySQLDataBaseTool(db=self._db)
+        )
         answer = answer_prompt | self._llm | StrOutputParser()
         self._chain = (
                 RunnablePassthrough.assign(query=write_query).assign(
@@ -70,7 +76,6 @@ class AgentLangChainSql:
                 )
                 | answer
         )
-
 
     def _db_get_examples(self) -> []:
         # 从配置表中读取提示信息
@@ -90,7 +95,9 @@ class AgentLangChainSql:
         examples = self._db_get_examples()
 
         # 3.2 Dynamic few-shot examples
-        modelPath = 'data/embed_model/bge-small-en-v1.5'
+        modelPath = '../data/embed_model/bge-small-en-v1.5'
+        if self._debug:
+            modelPath = 'data/embed_model/bge-small-en-v1.5'
         model_kwargs = {'device': 'cpu'}
         encode_kwargs = {'normalize_embeddings': True}
         embeddings = HuggingFaceEmbeddings(
@@ -140,9 +147,10 @@ class AgentLangChainSql:
         return ChatMessage(role="assistant", content=response)
 
     def chat_debug(self, message: str) -> str:
-        set_debug(True)
-
         try:
+            question = message
+            sql_query = ""
+            result = ""
             response = self._chain.invoke({"question": message})
             self._db_save_query_result(message, response, 1)
         except:
@@ -151,7 +159,7 @@ class AgentLangChainSql:
         return response
 
 
-# agent_lang_chain = AgentLangChainSql()
+agent_lang_chain = AgentLangChainSql(True)
 # ret = agent_lang_chain.chat_debug("盘点车辆总数")
-# # ret = agent_lang_chain.chat_debug("福田总部在哪")
-# print(ret)
+ret = agent_lang_chain.chat_debug("福田总部在哪")
+print(ret)

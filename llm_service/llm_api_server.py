@@ -8,6 +8,7 @@ import openai
 
 from llm_service.agents.agent_chat import AgentChat
 from llm_service.agents.agent_document import AgentDocument
+from llm_service.agents.agent_langchain import AgentLangChainSql
 
 # 没有用到，不填会报错
 from agents.agent_sql import AgentSql
@@ -18,7 +19,8 @@ openai.api_key = os.environ["OPENAI_API_KEY"]
 # 不同的代理对象，用于聊天、查知识库、查数据表等
 agent_chat = AgentChat()
 agent_document = AgentDocument()
-agent_sql = AgentSql()
+# agent_sql = AgentSql()
+agent_sql = AgentLangChainSql()
 
 user_chat_history = {}
 user_chat_len = 10

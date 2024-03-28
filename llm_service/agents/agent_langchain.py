@@ -29,8 +29,11 @@ class AgentLangChainSql:
     _llm: Ollama
     _db: SQLDatabase
     _example_selector: SemanticSimilarityExampleSelector
+    _mysql: MysqlUtil
 
     def __init__(self) -> None:
+        self._mysql = MysqlUtil(host='1.92.64.112', db='llama_config', user='root', passwd='Foton12345&')
+
         # 1 Dialect-specific prompting
         self._llm = Ollama(model="pxlksr/defog_sqlcoder-7b-2:Q8")
         self._llm.temperature = 0
@@ -46,22 +49,25 @@ class AgentLangChainSql:
         # self.chain = create_sql_query_chain(self._llm, self._db, self._prompt)
         self.chain = SQLDatabaseChain.from_llm(self._llm, self._db, self._prompt, verbose=False)
 
-    def _get_examples(self) -> []:
+    def _db_get_examples(self) -> []:
         # 从配置表中读取提示信息
-        mysql = MysqlUtil(host='1.92.64.112', db='llama_config', user='root', passwd='Foton12345&')
         sql = "select * from prompts"
-        results = mysql.get(sql)
+        results = self._mysql.get(sql)
         examples = []
         for res in results:
             examples.append({'input': res['input'], 'query': res['query']})
         return examples
 
+    def _db_save_query_result(self, input_msg: str, result_msg: str, state: int) -> any:
+        insert_sql = "insert into llm_query_result(input, result, state) values (%s, %s, %s)"
+        return self._mysql.crud(insert_sql, [input_msg, result_msg, str(state)])
+
     def _get_prompt(self) -> FewShotPromptTemplate:
         # 3.1 Few-shot examples
-        examples = self._get_examples()
+        examples = self._db_get_examples()
 
         # 3.2 Dynamic few-shot examples
-        modelPath = '../data/embed_model/bge-small-en-v1.5'
+        modelPath = 'data/embed_model/bge-small-en-v1.5'
         model_kwargs = {'device': 'cpu'}
         encode_kwargs = {'normalize_embeddings': True}
         embeddings = HuggingFaceEmbeddings(
@@ -97,25 +103,33 @@ class AgentLangChainSql:
         return response_example
 
     def chat(self, messages: List[ChatMessage]) -> ChatMessage:
-        if messages:
-            message = messages[-1]
-            set_debug(True)
-            response = self.chain.invoke({"question": message})
-            return ChatMessage(role="assistant", content=response)
-        else:
+        if not messages:
             return ChatMessage(role="assistant", content="can i help you!")
 
-    def chat(self, message: str) -> str:
-        set_debug(True)
+        message = messages[-1]
+        try:
+            response = self.chain.run(message)
+            self._db_save_query_result(message, response, 1)
+        except:
+            response = '暂无答案，请换个问题试试。eg：' + self._get_tips_example(message)
+            self._db_save_query_result(message, response, 2)
+        return ChatMessage(role="assistant", content=response)
+
+    def chat_debug(self, message: str) -> str:
+        # 打开调试信息
+        # set_debug(True)
+        # 返回sql
         # self.chain.return_sql = True
         try:
             response = self.chain.run(message)
+            self._db_save_query_result(message, response, 1)
         except:
             response = '暂无答案，请换个问题试试。eg：' + self._get_tips_example(message)
+            self._db_save_query_result(message, response, 2)
         return response
 
 
-agent_lang_chain = AgentLangChainSql()
-ret = agent_lang_chain.chat("盘点车辆总数")
-# ret = agent_lang_chain.chat("福田总部在哪")
-print(ret)
+# agent_lang_chain = AgentLangChainSql()
+# ret = agent_lang_chain.chat("盘点车辆总数")
+# # ret = agent_lang_chain.chat("福田总部在哪")
+# print(ret)

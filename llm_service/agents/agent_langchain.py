@@ -10,23 +10,20 @@
     需要使用mysql数据进行测试
 """
 from typing import List, Union, Dict, Any
+
 from langchain.chains.sql_database.query import create_sql_query_chain, SQLInput, SQLInputWithTables
 from langchain.globals import set_debug
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.llms.ollama import Ollama
+from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_community.utilities.sql_database import SQLDatabase
 from langchain_community.vectorstores import FAISS
 from langchain_core.example_selectors import SemanticSimilarityExampleSelector
-from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate
-from langchain_experimental.sql import SQLDatabaseChain
-from llama_index.core.base.llms.types import ChatMessage
-from operator import itemgetter
-
-from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
-
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import FewShotPromptTemplate
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnablePassthrough, Runnable
+from langchain_core.runnables import Runnable
+from llama_index.core.base.llms.types import ChatMessage
 
 from llm_service.util.mysql_util import MysqlUtil
 

@@ -5,3 +5,7 @@ flask==3.0.2
 flask-cors==4.0.0
 PyMySQL==1.1.0
 mysqlclient==2.2.4
+langchain==0.1.12
+langchain-experimental==0.0.54
+sentence-transformers==2.5.1
+faiss-cpu==1.8.0

@@ -1,3 +1,4 @@
+import sys
 from typing import List
 
 from flask import Flask, request, jsonify
@@ -5,10 +6,13 @@ from flask_cors import CORS, cross_origin
 from llama_index.core.base.llms.types import ChatMessage
 import os
 import openai
+# 把当前文件所在文件夹的父文件夹路径加入到PYTHONPATH
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from llm_service.agents import *
 
-from llm_service.agents.agent_chat import AgentChat
-from llm_service.agents.agent_document import AgentDocument
-from llm_service.agents.agent_langchain import AgentLangChainSql
+from agents.agent_chat import AgentChat
+from agents.agent_document import AgentDocument
+from agents.agent_langchain import AgentLangChainSql
 
 # 没有用到，不填会报错
 from agents.agent_sql import AgentSql

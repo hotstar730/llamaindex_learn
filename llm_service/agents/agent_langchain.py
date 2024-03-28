@@ -67,7 +67,7 @@ class AgentLangChainSql:
         examples = self._db_get_examples()
 
         # 3.2 Dynamic few-shot examples
-        modelPath = 'data/embed_model/bge-small-en-v1.5'
+        modelPath = '../data/embed_model/bge-small-en-v1.5'
         model_kwargs = {'device': 'cpu'}
         encode_kwargs = {'normalize_embeddings': True}
         embeddings = HuggingFaceEmbeddings(
@@ -106,6 +106,7 @@ class AgentLangChainSql:
         if not messages:
             return ChatMessage(role="assistant", content="can i help you!")
 
+        self.chain.return_sql = False
         message = messages[-1]
         try:
             response = self.chain.run(message)
@@ -117,9 +118,9 @@ class AgentLangChainSql:
 
     def chat_debug(self, message: str) -> str:
         # 打开调试信息
-        # set_debug(True)
+        set_debug(True)
         # 返回sql
-        # self.chain.return_sql = True
+        self.chain.return_sql = False
         try:
             response = self.chain.run(message)
             self._db_save_query_result(message, response, 1)
@@ -129,7 +130,7 @@ class AgentLangChainSql:
         return response
 
 
-# agent_lang_chain = AgentLangChainSql()
-# ret = agent_lang_chain.chat("盘点车辆总数")
-# # ret = agent_lang_chain.chat("福田总部在哪")
-# print(ret)
+agent_lang_chain = AgentLangChainSql()
+ret = agent_lang_chain.chat_debug("盘点车辆总数")
+# ret = agent_lang_chain.chat_debug("福田总部在哪")
+print(ret)

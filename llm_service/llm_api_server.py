@@ -1,29 +1,26 @@
+import os
 import sys
 from typing import List
 
+# 把当前文件所在文件夹的父文件夹路径加入到PYTHONPATH
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import openai
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from llama_index.core.base.llms.types import ChatMessage
-import os
-import openai
-# 把当前文件所在文件夹的父文件夹路径加入到PYTHONPATH
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from llm_service.agents import *
 
 from agents.agent_chat import AgentChat
 from agents.agent_document import AgentDocument
 from agents.agent_langchain import AgentLangChainSql
 
 # 没有用到，不填会报错
-from agents.agent_sql import AgentSql
-
 os.environ["OPENAI_API_KEY"] = "sk-.."
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
 # 不同的代理对象，用于聊天、查知识库、查数据表等
 agent_chat = AgentChat()
 agent_document = AgentDocument()
-# agent_sql = AgentSql()
 agent_sql = AgentLangChainSql()
 
 user_chat_history = {}

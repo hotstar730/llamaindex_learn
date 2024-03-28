@@ -9,8 +9,8 @@
     创建日期： 2024/3/14 13:47
     需要使用mysql数据进行测试
 """
-from typing import List
-from langchain.chains.sql_database.query import create_sql_query_chain
+from typing import List, Union, Dict, Any
+from langchain.chains.sql_database.query import create_sql_query_chain, SQLInput, SQLInputWithTables
 from langchain.globals import set_debug
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.llms.ollama import Ollama
@@ -26,18 +26,17 @@ from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnablePassthrough
+from langchain_core.runnables import RunnablePassthrough, Runnable
 
 from llm_service.util.mysql_util import MysqlUtil
 
 
 class AgentLangChainSql:
-    _prompt: FewShotPromptTemplate
-    _llm: Ollama
-    _db: SQLDatabase
     _example_selector: SemanticSimilarityExampleSelector
     _mysql: MysqlUtil
-    _chain: SQLDatabaseChain
+    _chain_query: Runnable[Union[SQLInput, SQLInputWithTables, Dict[str, Any]], str]
+    _db_execute: QuerySQLDataBaseTool
+    _chain_answer: Runnable[Union[SQLInput, SQLInputWithTables, Dict[str, Any]], str]
     _debug: False
 
     def __init__(self, debug=False) -> None:
@@ -48,19 +47,18 @@ class AgentLangChainSql:
         self._mysql = MysqlUtil(host='1.92.64.112', db='llama_config', user='root', passwd='Foton12345&')
 
         # 1 Dialect-specific prompting
-        self._llm = Ollama(model="pxlksr/defog_sqlcoder-7b-2:Q8")
-        self._llm.temperature = 0
-        self._llm.base_url = "http://1.92.64.112:11434"
+        llm = Ollama(model="pxlksr/defog_sqlcoder-7b-2:Q8")
+        llm.temperature = 0
+        llm.base_url = "http://1.92.64.112:11434"
 
         # 2 Table definitions and example rows
-        self._db = SQLDatabase.from_uri("mysql+pymysql://root:Foton12345&@1.92.64.112/llama", sample_rows_in_table_info=3)
+        db = SQLDatabase.from_uri("mysql+pymysql://root:Foton12345&@1.92.64.112/llama", sample_rows_in_table_info=3)
 
         # 3 get prompt
-        self._prompt = self._get_prompt()
+        prompt = self._get_prompt()
 
-
-        write_query = create_sql_query_chain(self._llm, self._db, self._prompt)
-        execute_query = QuerySQLDataBaseTool(db=self._db)
+        self._chain_query = create_sql_query_chain(llm, db, prompt)
+        self._db_execute = QuerySQLDataBaseTool(db=db)
 
         answer_prompt = PromptTemplate.from_template(
             """Given the following user question, corresponding SQL query, and SQL result, answer the user question.
@@ -69,13 +67,8 @@ class AgentLangChainSql:
                 SQL Result: {result}
                 Answer: """
         )
-        answer = answer_prompt | self._llm | StrOutputParser()
-        self._chain = (
-                RunnablePassthrough.assign(query=write_query).assign(
-                    result=itemgetter("query") | execute_query
-                )
-                | answer
-        )
+        self._chain_answer = answer_prompt | llm | StrOutputParser()
+
 
     def _db_get_examples(self) -> []:
         # 从配置表中读取提示信息
@@ -86,18 +79,18 @@ class AgentLangChainSql:
             examples.append({'input': res['input'], 'query': res['query']})
         return examples
 
-    def _db_save_query_result(self, input_msg: str, result_msg: str, state: int) -> any:
-        insert_sql = "insert into llm_query_result(input, result, state) values (%s, %s, %s)"
-        return self._mysql.crud(insert_sql, [input_msg, result_msg, str(state)])
+    def _db_save_query_result(self, input_msg: str, query_msg: str, result_msg: str, state: int) -> any:
+        insert_sql = "insert into llm_query_result(input, query, result, state) values (%s, %s, %s, %s)"
+        return self._mysql.crud(insert_sql, [input_msg, query_msg, result_msg, str(state)])
 
     def _get_prompt(self) -> FewShotPromptTemplate:
         # 3.1 Few-shot examples
         examples = self._db_get_examples()
 
         # 3.2 Dynamic few-shot examples
-        modelPath = '../data/embed_model/bge-small-en-v1.5'
+        modelPath = 'data/embed_model/bge-small-en-v1.5'
         if self._debug:
-            modelPath = 'data/embed_model/bge-small-en-v1.5'
+            modelPath = '../data/embed_model/bge-small-en-v1.5'
         model_kwargs = {'device': 'cpu'}
         encode_kwargs = {'normalize_embeddings': True}
         embeddings = HuggingFaceEmbeddings(
@@ -137,25 +130,40 @@ class AgentLangChainSql:
             return ChatMessage(role="assistant", content="can i help you!")
 
         message = messages[-1].content
-        set_debug(True)
+
         try:
-            response = self._chain.invoke({"question": message})
-            self._db_save_query_result(message, response, 1)
+            question = message
+            query = self._chain_query.invoke({"question": question})
+            result = self._db_execute.run(query)
+            response = self._chain_answer.invoke(
+                {
+                    "question": question,
+                    "query": query,
+                    "result": result
+                }
+            )
+            self._db_save_query_result(message, query, response, 1)
         except:
             response = '暂无答案，请换个问题试试。eg：' + self._get_tips_example(message)
-            self._db_save_query_result(message, response, 2)
+            self._db_save_query_result(message, "", response, 2)
         return ChatMessage(role="assistant", content=response)
 
     def chat_debug(self, message: str) -> str:
         try:
             question = message
-            sql_query = ""
-            result = ""
-            response = self._chain.invoke({"question": message})
-            self._db_save_query_result(message, response, 1)
+            query = self._chain_query.invoke({"question": question})
+            result = self._db_execute.run(query)
+            response = self._chain_answer.invoke(
+                {
+                    "question": question,
+                    "query": query,
+                    "result": result
+                }
+            )
+            self._db_save_query_result(message, query, response, 1)
         except:
             response = '暂无答案，请换个问题试试。eg：' + self._get_tips_example(message)
-            self._db_save_query_result(message, response, 2)
+            self._db_save_query_result(message, "", response, 2)
         return response
 
 

@@ -20,6 +20,13 @@ from langchain_core.example_selectors import SemanticSimilarityExampleSelector
 from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate
 from langchain_experimental.sql import SQLDatabaseChain
 from llama_index.core.base.llms.types import ChatMessage
+from operator import itemgetter
+
+from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
+
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_core.runnables import RunnablePassthrough
 
 from llm_service.util.mysql_util import MysqlUtil
 
@@ -30,6 +37,7 @@ class AgentLangChainSql:
     _db: SQLDatabase
     _example_selector: SemanticSimilarityExampleSelector
     _mysql: MysqlUtil
+    _chain: SQLDatabaseChain
 
     def __init__(self) -> None:
         self._mysql = MysqlUtil(host='1.92.64.112', db='llama_config', user='root', passwd='Foton12345&')
@@ -45,9 +53,24 @@ class AgentLangChainSql:
         # 3 get prompt
         self._prompt = self._get_prompt()
 
-        # get chain
-        # self.chain = create_sql_query_chain(self._llm, self._db, self._prompt)
-        self.chain = SQLDatabaseChain.from_llm(self._llm, self._db, self._prompt, verbose=False)
+        answer_prompt = PromptTemplate.from_template(
+                """Given the following user question, corresponding SQL query, and SQL result, answer the user question.
+                Question: {question}
+                SQL Query: {query}
+                SQL Result: {result}
+                Answer: """
+                )
+
+        write_query = create_sql_query_chain(self._llm, self._db, self._prompt)
+        execute_query = QuerySQLDataBaseTool(db=self._db)
+        answer = answer_prompt | self._llm | StrOutputParser()
+        self._chain = (
+                RunnablePassthrough.assign(query=write_query).assign(
+                    result=itemgetter("query") | execute_query
+                )
+                | answer
+        )
+
 
     def _db_get_examples(self) -> []:
         # 从配置表中读取提示信息
@@ -67,7 +90,7 @@ class AgentLangChainSql:
         examples = self._db_get_examples()
 
         # 3.2 Dynamic few-shot examples
-        modelPath = '../data/embed_model/bge-small-en-v1.5'
+        modelPath = 'data/embed_model/bge-small-en-v1.5'
         model_kwargs = {'device': 'cpu'}
         encode_kwargs = {'normalize_embeddings': True}
         embeddings = HuggingFaceEmbeddings(
@@ -88,7 +111,7 @@ class AgentLangChainSql:
         prompt = FewShotPromptTemplate(
             example_selector=self._example_selector,
             example_prompt=example_prompt,
-            prefix="You are a MySQL expert. Given an input question, create a syntactically correct SQLite query to run. Unless otherwise specificed, do not return more than {top_k} rows.\n\nHere is the relevant table info: {table_info}\n\nBelow are a number of examples of questions and their corresponding SQL queries.",
+            prefix="You are a MySQL expert. Given an input question, create a syntactically correct Mysql query to run. Unless otherwise specificed, do not return more than {top_k} rows. then look at the results of the query and return the answer.\n\nHere is the relevant table info: {table_info}\n\nBelow are a number of examples of questions and their corresponding SQL queries.",
             suffix="User input: {input}\nSQL query: ",
             input_variables=["input", "top_k", "table_info"],
         )
@@ -106,10 +129,10 @@ class AgentLangChainSql:
         if not messages:
             return ChatMessage(role="assistant", content="can i help you!")
 
-        self.chain.return_sql = False
-        message = messages[-1]
+        message = messages[-1].content
+        set_debug(True)
         try:
-            response = self.chain.run(message)
+            response = self._chain.invoke({"question": message})
             self._db_save_query_result(message, response, 1)
         except:
             response = '暂无答案，请换个问题试试。eg：' + self._get_tips_example(message)
@@ -117,12 +140,10 @@ class AgentLangChainSql:
         return ChatMessage(role="assistant", content=response)
 
     def chat_debug(self, message: str) -> str:
-        # 打开调试信息
         set_debug(True)
-        # 返回sql
-        self.chain.return_sql = False
+
         try:
-            response = self.chain.run(message)
+            response = self._chain.invoke({"question": message})
             self._db_save_query_result(message, response, 1)
         except:
             response = '暂无答案，请换个问题试试。eg：' + self._get_tips_example(message)
@@ -130,7 +151,7 @@ class AgentLangChainSql:
         return response
 
 
-agent_lang_chain = AgentLangChainSql()
-ret = agent_lang_chain.chat_debug("盘点车辆总数")
-# ret = agent_lang_chain.chat_debug("福田总部在哪")
-print(ret)
+# agent_lang_chain = AgentLangChainSql()
+# ret = agent_lang_chain.chat_debug("盘点车辆总数")
+# # ret = agent_lang_chain.chat_debug("福田总部在哪")
+# print(ret)

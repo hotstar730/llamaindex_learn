@@ -134,15 +134,17 @@ class AgentLangChainSql:
             question = message
             query = self._chain_query.invoke({"question": question})
             result = self._db_execute.run(query)
+            if result.find('Error') != -1:
+                raise Exception('sql查询失败: {}'.format(query))
             response = self._chain_answer.invoke({"question": question, "query": query, "result": result})
             self._db_save_query_result(message, query, response, 1)
-        except:
+        except Exception as e:
             response = '暂无答案，请换个问题试试。eg：' + self._get_tips_example(message)
             self._db_save_query_result(message, "", response, 2)
         return ChatMessage(role="assistant", content=response)
 
 
-agent_lang_chain = AgentLangChainSql(True)
-# ret = agent_lang_chain.chat([ChatMessage(role="assistant", content='盘点车辆总数')])
-ret = agent_lang_chain.chat([ChatMessage(role="assistant", content='福田总部在哪')])
-print(ret)
+# agent_lang_chain = AgentLangChainSql(True)
+# # ret = agent_lang_chain.chat([ChatMessage(role="assistant", content='盘点车辆总数')])
+# ret = agent_lang_chain.chat([ChatMessage(role="assistant", content='北京人口最终会到达多少')])
+# print(ret)

@@ -9,6 +9,7 @@
     创建日期： 2024/3/14 13:47
     需要使用mysql数据进行测试
 """
+from operator import itemgetter
 from typing import List, Union, Dict, Any
 
 from langchain.chains.sql_database.query import create_sql_query_chain, SQLInput, SQLInputWithTables
@@ -22,7 +23,7 @@ from langchain_core.example_selectors import SemanticSimilarityExampleSelector
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import FewShotPromptTemplate
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import Runnable
+from langchain_core.runnables import Runnable, RunnablePassthrough
 from llama_index.core.base.llms.types import ChatMessage
 
 from llm_service.util.mysql_util import MysqlUtil
@@ -58,14 +59,9 @@ class AgentLangChainSql:
         self._db_execute = QuerySQLDataBaseTool(db=db)
 
         answer_prompt = PromptTemplate.from_template(
-            """Given the following user question, corresponding SQL query, and SQL result, answer the user question.
-                Question: {question}
-                SQL Query: {query}
-                SQL Result: {result}
-                Answer: """
+            """Given the following user question, corresponding SQL query, and SQL result, answer the user question. \nQuestion: {question}. \nSQL Query: {query}. \nSQL Result: {result}. \nAnswer: """
         )
         self._chain_answer = answer_prompt | llm | StrOutputParser()
-
 
     def _db_get_examples(self) -> []:
         # 从配置表中读取提示信息
@@ -141,7 +137,7 @@ class AgentLangChainSql:
         return ChatMessage(role="assistant", content=response)
 
 
-# agent_lang_chain = AgentLangChainSql(True)
-# # ret = agent_lang_chain.chat([ChatMessage(role="assistant", content='盘点车辆总数')])
-# ret = agent_lang_chain.chat([ChatMessage(role="assistant", content='北京人口最终会到达多少')])
-# print(ret)
+agent_lang_chain = AgentLangChainSql(True)
+# ret = agent_lang_chain.chat([ChatMessage(role="assistant", content='盘点车辆总数')])
+ret = agent_lang_chain.chat([ChatMessage(role="assistant", content='盘点方式有几种')])
+print(ret)
